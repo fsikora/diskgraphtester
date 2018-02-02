@@ -23,6 +23,7 @@ The dependencies are listed below.
 ### How do I get set up? ###
 
 You need to install:
+
 1- the python package python-networkx to handle graphs (apt-get install python-networkx)
 
 2- the SCIP solver at http://scip.zib.de/#download
