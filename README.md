@@ -3,7 +3,9 @@
 ### What is this repository for? ###
 
 We share two python files to experiment with disk graphs, test conjecture, and draw figures:
+
 - disks.py
+
 - toTikz.py 
 
 In disks.py, you will find functions to generate disk graphs, and to test if a given graph has a disk or a unit disk representation. 
