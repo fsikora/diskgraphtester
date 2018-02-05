@@ -1,6 +1,6 @@
 # README #
 
-Authors: Êdouard Bonnet, Florian Sikora, Paweł Rzążewski
+Authors: Édouard Bonnet, Florian Sikora, Paweł Rzążewski
 
 ### What is this repository for? ###
 
