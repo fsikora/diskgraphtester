@@ -1,5 +1,7 @@
 # README #
 
+Authors: Édouard Bonnet, Florian Sikora, Paweł Rzążewski
+
 ### What is this repository for? ###
 
 We share two python files to experiment with disk graphs, test conjecture, and draw figures:
