@@ -34,6 +34,7 @@ from pyscipopt import Model
 #from a list of centers/radii (x,y,r) build the disk intersection graph
 def diskGraphFromList(t):
     G = nx.Graph()
+    n = len(t) 
     G.add_nodes_from(range(1,n+1)) #add the vertices 1,2,...,n
     for i in range(1,n+1):
         for j in range(i+1,n+1):
@@ -43,10 +44,10 @@ def diskGraphFromList(t):
                 G.add_edge(i,j)
     return G
 
-#return a disk graph on n vertices where the centers and radii are chosen uniformly at random.
-def randomDiskGraph(n,unit=False,xBox=2,yBox=2,maxRadius=1):
-    t = n * [0]
-    for i in range(1,n+1): #randomly select the center 
+#return a disk graph on n vertices where the centers and radii are chosen uniformly at random, and a representation.
+def randomDiskRep(n,unit=False,xBox=2,yBox=2,maxRadius=1):
+    t = n * [(0,0,0)]
+    for i in range(n): #randomly select the center 
         x = xBox * random.random()
         y = yBox * random.random()
         if unit:
@@ -54,7 +55,7 @@ def randomDiskGraph(n,unit=False,xBox=2,yBox=2,maxRadius=1):
         else: #and the radius
             r = maxRadius * random.random()
         t[i] = (x,y,r)
-    return graphFromDisks(t), t
+    return diskGraphFromList(t), t
 
 #same for unit disk graphs.
 def randomUnitDiskGraph(n,xBox=2,yBox=2):
@@ -70,8 +71,8 @@ xMin = 1.0
 xMax = 2.0
 yMin = 1.0
 yMax = 2.0
-rMin = 0.0
-rMax = 1.5
+rMin = 0.45
+rMax = 0.46
 
 #generate the n*(n-1)/2 inequalities for a graph on n vertices to be a disk graph.
 #produce a pyscipopt model with 3 lists of variables for the two coordinates and the centers.
@@ -139,12 +140,46 @@ def testUnitGraph(G,f="unitSolution.txt",timeOut=0):
 
 ### Examples
 
+def diskInequalitiesCircle(G):
+   model = Model("disk")
+   X,Y,R = {},{},{}
+   for u in G.nodes(): #defining the 3|V(G)| continuous variables
+      R[u] = model.addVar("r"+str(u), vtype="C", lb=rMin, ub=rMax)
+      X[u] = model.addVar("x"+str(u), vtype="C", lb=xMin, ub=xMax)
+      Y[u] = model.addVar("y"+str(u), vtype="C", lb=yMin, ub=yMax)
+   for u in G.nodes(): #all centers lie on a circle
+      model.addCons(pow(X[u] - 1.5, 2) + pow(Y[u] - 1.5, 2) <= 0.3001)
+      model.addCons(pow(X[u] - 1.5, 2) + pow(Y[u] - 1.5, 2) >= 0.3)
+   for (u,v) in G.edges(): #inequality for an edge
+      model.addCons(pow(X[u] - X[v], 2) + pow(Y[u] - Y[v], 2) - pow(R[u] + R[v], 2) <= 0)
+   for (u,v) in (nx.complement(G)).edges(): #inequality for a non-edge
+      model.addCons(pow(X[u] - X[v], 2) + pow(Y[u] - Y[v], 2) - pow(R[u] + R[v], 2) >= eps)
+   return model, X, Y, R
+
+def testGraphCircle(G,f="solution.txt",timeOut=0):
+    model,X,Y,R = diskInequalitiesCircle(G)
+    print("inequalities generated")
+    print("starts solving")
+    if timeOut != 0:
+        model.setRealParam("limits/time", timeOut)
+    model.optimize()
+    solFound = (model.getStatus() == "optimal")
+    if solFound:
+        print("solution found")
+        sol = open(f, "w")
+        for v in G.nodes():
+            sol.write( '('+ str(model.getVal(X[v])) + ',' + str(model.getVal(Y[v])) + ',' +  str(model.getVal(R[v])) + ") ; " + "\n")
+        sol.close()
+    return solFound
+
 ### disk graph
-#G = nx.Graph()
-#G.add_cycle([1,2,3,4])
-#G.add_cycle([5,6,7,8])
-#H=nx.complement(G)
-#testGraph(H)
+G = nx.Graph()
+#G.add_edges_from([(1,2),(3,4),(5,6),(7,8),(9,10),(11,12),(13,14),(15,16),(17,18)])
+G.add_cycle([1,2,3,4,5,6,7])
+G.add_cycle([8,9,10,11,12,13,14])
+G.add_edges_from([(1,8)])
+H=nx.complement(G)
+testGraph(H)
 
 ### non disk graph
 #G = nx.Graph()
